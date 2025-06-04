@@ -1,181 +1,52 @@
 {% extends 'app_med_kit/med_kit_base.html' %}
+{% load static %}
+
 {% block title %}Manage Kit{% endblock %}
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/manage_kit.css' %}">
+{% endblock %}
 {% block content %}
-
-<style>
-    .drug-entry {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        border: 1px solid #ddd;
-        padding: 10px;
-        margin-bottom: 10px;
-        border-radius: 4px;
-        background-color: #fefefe;
-        font-size: 14px;
-    }
-
-    .drug-info {
-        display: flex;
-        flex: 1;
-        gap: 20px;
-        align-items: center;
-        overflow: hidden;
-    }
-
-    .drug-info div {
-        width: 150px;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        white-space: nowrap;
-    }
-
-    .drug-form input {
-        width: 100%;
-        box-sizing: border-box;
-    }
-
-    .drug-actions {
-        display: flex;
-        gap: 5px;
-        align-items: center;
-        margin-left: 20px;
-    }
-</style>
-
 <h1>Manage Kit: {{ kit.name }}</h1>
 <p>{{ kit.description }}</p>
-
 <a href="{% url 'dashboard' %}">← Back to Dashboard</a>
 
 <hr>
-
 <h2>Drugs</h2>
 
 {% for drug in drugs %}
 <div id="drug-{{ drug.id }}" class="drug-entry">
-    <!-- Left: Drug info -->
-    <form method="post" action="{% url 'edit_drug' kit.id drug.id %}" class="drug-form" style="display: contents;">
+    <form method="post" action="{% url 'edit_drug' kit.id drug.id %}" class="drug-form">
         {% csrf_token %}
         <div class="drug-info">
-            <div>
-                <span class="display name"><strong>{{ drug.name }}</strong></span>
-                <input class="edit name" type="text" name="name" value="{{ drug.name }}" style="display: none;" required>
+            <div><span class="display name"><strong>{{ drug.name }}</strong></span><input class="edit name" type="text" name="name" value="{{ drug.name }}" hidden required></div>
+            <div><span class="display number">{{ drug.number }}</span><input class="edit number" type="number" name="number" value="{{ drug.number }}" hidden required></div>
+            <div><span class="display price">${{ drug.price }}</span><input class="edit price" type="number" step="0.01" name="price" value="{{ drug.price }}" hidden></div>
+            <div><span class="display expiration">{{ drug.expiration_date }}</span><input class="edit expiration" type="date" name="expiration_date" value="{{ drug.expiration_date|date:'Y-m-d' }}" hidden></div>
+            <div class="desc-block">
+                <button type="button" class="display description" onclick="showDescriptionPopup(event, '{{ drug.description|escapejs }}')">Show Description</button>
+                <textarea class="edit description" name="description" hidden>{{ drug.description }}</textarea>
             </div>
-
-            <div>
-                <span class="display number">{{ drug.number }}</span>
-                <input class="edit number" type="number" name="number" value="{{ drug.number }}" style="display: none;" required>
-            </div>
-
-            <div>
-                <span class="display price">${{ drug.price }}</span>
-                <input class="edit price" type="number" step="0.01" name="price" value="{{ drug.price }}" style="display: none;">
-            </div>
-
-            <div>
-                <span class="display expiration">{{ drug.expiration_date }}</span>
-                <input class="edit expiration" type="date" name="expiration_date" value="{{ drug.expiration_date|date:'Y-m-d' }}" style="display: none;">
-            </div>
-<!-- 
-            <div>
-                <span class="display created">{{ drug.created_at|date:"Y-m-d H:i" }}</span>
-            </div> -->
-
-            <div style="width: 200px; overflow: hidden;">
-                <!-- View mode: Show Description button -->
-                <button type="button" class="display description" onclick="showDescriptionPopup(event, '{{ drug.description|escapejs }}')">
-                    Show Description
-                </button>
-            
-                <!-- Edit mode: editable input -->
-                <textarea class="edit description" name="description" style="display: none; resize: vertical; min-height: 50px;" rows="3">{{ drug.description }}</textarea>
-            </div>
-
         </div>
-
-        <!-- Right: Actions -->
         <div class="drug-actions">
-            <button type="submit" class="confirm-btn" style="display: none;">Confirm</button>
+            <button type="submit" class="confirm-btn" hidden>Confirm</button>
         </div>
     </form>
-
-    <!-- Separate Take + Toggle buttons -->
     <div class="drug-actions">
-        <form method="post" action="{% url 'take_drug' kit.id drug.id %}" style="margin: 0;">
+        <form method="post" action="{% url 'take_drug' kit.id drug.id %}">
             {% csrf_token %}
             <button type="submit">Take</button>
         </form>
-
         <button type="button" class="edit-toggle-btn" onclick="toggleEdit('{{ drug.id }}')">Edit</button>
     </div>
 </div>
 {% endfor %}
 
-<script>
-    function toggleEdit(id) {
-        const row = document.getElementById('drug-' + id);
-        const displayElems = row.querySelectorAll('.display');
-        const editElems = row.querySelectorAll('.edit');
-        const confirmBtn = row.querySelector('.confirm-btn');
-        const toggleBtn = row.querySelector('.edit-toggle-btn');
-    
-        const editing = toggleBtn.textContent === 'Cancel';
-    
-        displayElems.forEach(el => el.style.display = editing ? 'inline' : 'none');
-        editElems.forEach(el => el.style.display = editing ? 'none' : 'inline');
-        confirmBtn.style.display = editing ? 'none' : 'inline';
-        toggleBtn.textContent = editing ? 'Edit' : 'Cancel';
-    }
-</script>
-<hr>
+<div id="description-popup"></div>
 
-<!-- Popup container (global) -->
-<div id="description-popup" style="
-    display: none;
-    position: absolute;
-    background-color: #fefefe;
-    border: 1px solid #ccc;
-    padding: 10px;
-    max-width: 300px;
-    z-index: 1000;
-    box-shadow: 0 0 5px rgba(0,0,0,0.2);
-    border-radius: 5px;
-    font-size: 14px;
-    white-space: pre-wrap;
-"></div>
-
-<script>
-    const popup = document.getElementById('description-popup');
-
-    function showDescriptionPopup(event, text) {
-        popup.innerText = text || '(No description)';
-        popup.style.left = (event.pageX + 10) + 'px';
-        popup.style.top = (event.pageY + 10) + 'px';
-        popup.style.display = 'block';
-
-        // Stop event from bubbling to window click
-        event.stopPropagation();
-    }
-
-    // Hide popup when clicking elsewhere
-    window.addEventListener('click', () => {
-        popup.style.display = 'none';
-    });
-
-    // Prevent closing when clicking inside the popup itself
-    popup.addEventListener('click', (e) => {
-        e.stopPropagation();
-    });
-</script>
-
-<!-- Add Drug Button -->
-<a href="?add_drug=1">
-    <button {% if show_form %}disabled{% endif %}>Add Drug</button>
-</a>
+<a href="?add_drug=1"><button {% if show_form %}disabled{% endif %}>Add Drug</button></a>
 
 {% if show_form %}
-<div style="margin-top: 10px;">
+<div class="form-container">
     <form method="post">
         {% csrf_token %}
         {{ form.as_p }}
@@ -184,5 +55,8 @@
     </form>
 </div>
 {% endif %}
+{% endblock %}
 
+{% block extra_js %}
+<script src="{% static 'js/manage_kit.js' %}"></script>
 {% endblock %}

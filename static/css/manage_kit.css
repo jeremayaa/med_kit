@@ -1,0 +1,59 @@
+.drug-entry {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border: 1px solid #ddd;
+    padding: 10px;
+    margin-bottom: 10px;
+    border-radius: 4px;
+    background-color: #fefefe;
+    font-size: 14px;
+}
+
+.drug-info {
+    display: flex;
+    flex: 1;
+    gap: 20px;
+    align-items: center;
+    overflow: hidden;
+}
+
+.drug-info div {
+    width: 150px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.drug-form input,
+.drug-form textarea {
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.drug-actions {
+    display: flex;
+    gap: 5px;
+    align-items: center;
+    margin-left: 20px;
+}
+
+.desc-block {
+    width: 200px;
+    overflow: hidden;
+    min-height: 50px;
+}
+
+#description-popup {
+    display: none;
+    position: absolute;
+    background-color: #fefefe;
+    border: 1px solid #ccc;
+    padding: 10px;
+    max-width: 300px;
+    z-index: 1000;
+    box-shadow: 0 0 5px rgba(0,0,0,0.2);
+    border-radius: 5px;
+    font-size: 14px;
+    white-space: pre-wrap;
+}

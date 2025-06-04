@@ -1,7 +1,11 @@
 {% extends 'app_med_kit/med_kit_base.html' %}
-{% block title %}Dashboard{% endblock %}
-{% block content %}
+{% load static %}
 
+{% block title %}Dashboard{% endblock %}
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/dashboard.css' %}">
+{% endblock %}
+{% block content %}
 <h1>Hello, {{ user.username }}</h1>
 
 <form method="post" action="{% url 'logout' %}">
@@ -13,19 +17,17 @@
 <h2>Your Kits</h2>
 <ul>
     {% for kit in kits %}
-        <li>
-            <div style="border: 1px solid #ccc; padding: 10px; margin-bottom: 15px; border-radius: 6px; background-color: #fff;">
-                <a href="{% url 'manage_kit' kit.id %}"><strong>{{ kit.name }}</strong></a>
-                {% if kit.description %}<br>{{ kit.description }}{% endif %}
-                <ul>
-                    {% for drug in kit.drugs.all|slice:":3" %}
-                        <li>{{ drug.name }} ({{ drug.number }})</li>
-                    {% endfor %}
-                    {% if kit.drugs.count > 3 %}
-                        <li>...and more</li>
-                    {% endif %}
-                </ul>
-            </div>
+        <li class="kit-card">
+            <a href="{% url 'manage_kit' kit.id %}"><strong>{{ kit.name }}</strong></a>
+            {% if kit.description %}<br>{{ kit.description }}{% endif %}
+            <ul>
+                {% for drug in kit.drugs.all|slice:":3" %}
+                    <li>{{ drug.name }} ({{ drug.number }})</li>
+                {% endfor %}
+                {% if kit.drugs.count > 3 %}
+                    <li>...and more</li>
+                {% endif %}
+            </ul>
         </li>
     {% empty %}
         <li>You have no kits yet.</li>
@@ -33,21 +35,16 @@
 </ul>
 
 <hr>
-
-<!-- Add Kit Button -->
-<a href="?add_kit=1">
-    <button {% if show_form %}disabled{% endif %}>Add Kit</button>
-</a>
+<a href="?add_kit=1"><button {% if show_form %}disabled{% endif %}>Add Kit</button></a>
 
 {% if show_form %}
-    <div style="margin-top: 10px;">
-        <form method="post">
-            {% csrf_token %}
-            {{ form.as_p }}
-            <button type="submit">Confirm</button>
-            <a href="{% url 'dashboard' %}"><button type="button">Cancel</button></a>
-        </form>
-    </div>
+<div class="form-container">
+    <form method="post">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button type="submit">Confirm</button>
+        <a href="{% url 'dashboard' %}"><button type="button">Cancel</button></a>
+    </form>
+</div>
 {% endif %}
-
 {% endblock %}
