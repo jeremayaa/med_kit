@@ -1,12 +1,16 @@
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
+from django.core.paginator import Paginator
+from django.views.decorators.http import require_POST
+
 from .models import Kit, Drug
-from .forms import KitForm
+from .forms import DrugForm, KitForm
+
 
 @login_required
 def dashboard(request):
     kits = Kit.objects.filter(user=request.user)
-    show_form = request.GET.get('add_kit') == '1'  # check URL param
+    show_form = request.GET.get('add_kit') == '1'
     form = KitForm() if show_form else None
 
     if request.method == 'POST':
@@ -15,7 +19,7 @@ def dashboard(request):
             kit = form.save(commit=False)
             kit.user = request.user
             kit.save()
-            return redirect('dashboard')  # clean reload with form hidden
+            return redirect('dashboard')
 
     return render(request, 'app_med_kit/dashboard.html', {
         'kits': kits,
@@ -23,44 +27,62 @@ def dashboard(request):
         'show_form': show_form,
     })
 
-from django.shortcuts import get_object_or_404
-from .forms import DrugForm
+from datetime import date
 
+from django.urls import reverse
 @login_required
 def manage_kit(request, kit_id):
+    # 1) Fetch the Kit (ensuring it belongs to the logged‐in user)
     kit = get_object_or_404(Kit, id=kit_id, user=request.user)
-    drugs = kit.drugs.all()
+
+    # 2) Determine sort order (default = 'name')
+    sort_by = request.GET.get('sort_by', 'name')
+    if sort_by == 'expiration_date':
+        # Order by expiration_date ascending
+        drug_list = kit.drugs.all().order_by('expiration_date')
+    else:
+        # Default: order by name (alphabetical)
+        drug_list = kit.drugs.all().order_by('name')
+
+    # 3) Paginate the results, 5 drugs per page
+    paginator = Paginator(drug_list, 5)
+    page_number = request.GET.get('page')  # `None` if not provided → first page
+    page_obj = paginator.get_page(page_number)
+
+    # 4) “Add Drug” form logic (unchanged)
     show_form = request.GET.get('add_drug') == '1'
     form = DrugForm() if show_form else None
 
     if request.method == 'POST':
+        # If user is submitting the “Add Drug” form (POST)
         form = DrugForm(request.POST)
         if form.is_valid():
             drug = form.save(commit=False)
             drug.kit = kit
             drug.save()
-            return redirect('manage_kit', kit_id=kit.id)
-
+            # After adding, redirect back (to page=1, preserve sort_by)
+            return redirect(f"{reverse('manage_kit', args=[kit.id])}?sort_by=name")
+    # 5) Render template with context
     return render(request, 'app_med_kit/manage_kit.html', {
         'kit': kit,
-        'drugs': drugs,
+        'page_obj': page_obj,
+        'sort_by': sort_by,
         'form': form,
         'show_form': show_form,
+        'today': date.today(),  # ← add this line
     })
-
-from django.views.decorators.http import require_POST
 
 @require_POST
 @login_required
 def edit_drug(request, kit_id, drug_id):
     kit = get_object_or_404(Kit, id=kit_id, user=request.user)
     drug = get_object_or_404(Drug, id=drug_id, kit=kit)
-
     form = DrugForm(request.POST, instance=drug)
     if form.is_valid():
         form.save()
-
-    return redirect('manage_kit', kit_id=kit.id)
+    # After editing, redirect back to the same manage_kit page, preserving sort_by & page=1
+    sort_by = request.GET.get('sort_by', 'name')
+    return redirect(f"{reverse('manage_kit', args=[kit.id])}?sort_by=name")
 
 
 @require_POST
@@ -68,12 +90,12 @@ def edit_drug(request, kit_id, drug_id):
 def take_drug(request, kit_id, drug_id):
     kit = get_object_or_404(Kit, id=kit_id, user=request.user)
     drug = get_object_or_404(Drug, id=drug_id, kit=kit)
-
     if drug.number > 0:
         drug.number -= 1
         drug.save()
-
-    return redirect('manage_kit', kit_id=kit.id)
+    sort_by = request.GET.get('sort_by', 'name')
+    page = request.GET.get('page', '1')
+    return redirect(f"{reverse('manage_kit', args=[kit.id])}?sort_by=name")
 
 
 @require_POST
@@ -82,4 +104,6 @@ def delete_drug(request, kit_id, drug_id):
     kit = get_object_or_404(Kit, id=kit_id, user=request.user)
     drug = get_object_or_404(Drug, id=drug_id, kit=kit)
     drug.delete()
-    return redirect('manage_kit', kit_id=kit.id)
+    sort_by = request.GET.get('sort_by', 'name')
+    page = request.GET.get('page', '1')
+    return redirect(f"{reverse('manage_kit', args=[kit.id])}?sort_by=name")

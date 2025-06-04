@@ -2,59 +2,207 @@
 {% load static %}
 
 {% block title %}Manage Kit{% endblock %}
+
 {% block extra_css %}
 <link rel="stylesheet" href="{% static 'css/manage_kit.css' %}">
 {% endblock %}
+
 {% block content %}
-<h1>Manage Kit: {{ kit.name }}</h1>
-<p>{{ kit.description }}</p>
-<a href="{% url 'dashboard' %}">← Back to Dashboard</a>
+  <h1>Manage Kit: {{ kit.name }}</h1>
+  <p>{{ kit.description }}</p>
+  <a href="{% url 'dashboard' %}">← Back to Dashboard</a>
 
-<hr>
-<h2>Drugs</h2>
+  <hr>
+  <h2>Drugs</h2>
 
-{% for drug in drugs %}
-<div id="drug-{{ drug.id }}" class="drug-entry">
-    <form method="post" action="{% url 'edit_drug' kit.id drug.id %}" class="drug-form">
-        {% csrf_token %}
-        <div class="drug-info">
-            <div><span class="display name"><strong>{{ drug.name }}</strong></span><input class="edit name" type="text" name="name" value="{{ drug.name }}" hidden required></div>
-            <div><span class="display number">{{ drug.number }}</span><input class="edit number" type="number" name="number" value="{{ drug.number }}" hidden required></div>
-            <div><span class="display price">${{ drug.price }}</span><input class="edit price" type="number" step="0.01" name="price" value="{{ drug.price }}" hidden></div>
-            <div><span class="display expiration">{{ drug.expiration_date }}</span><input class="edit expiration" type="date" name="expiration_date" value="{{ drug.expiration_date|date:'Y-m-d' }}" hidden></div>
-            <div class="desc-block">
-                <button type="button" class="display description" onclick="showDescriptionPopup(event, '{{ drug.description|escapejs }}')">Show Description</button>
-                <textarea class="edit description" name="description" hidden>{{ drug.description }}</textarea>
-            </div>
+  {# ───── Sort Navbar ───── #}
+  <div class="sort-navbar">
+    Sort by:
+    {% if sort_by == 'name' %}
+      <strong>Name</strong> |
+      <a href="?sort_by=expiration_date">Expiration Date</a>
+    {% else %}
+      <a href="?sort_by=name">Name</a> |
+      <strong>Expiration Date</strong>
+    {% endif %}
+  </div>
+
+  {# ───── List of Drugs (only 5 per page) ───── #}
+  {% for drug in page_obj.object_list %}
+    <div id="drug-{{ drug.id }}" class="drug-entry">
+      {# ——— Drug Info ——— #}
+      <div class="drug-info">
+        <div>
+          <span class="display name"><strong>{{ drug.name }}</strong></span>
+          <input
+            form="edit-form-{{ drug.id }}"
+            class="edit name"
+            type="text"
+            name="name"
+            value="{{ drug.name }}"
+            hidden
+            required
+          >
         </div>
-        <div class="drug-actions">
-            <button type="submit" class="confirm-btn" hidden>Confirm</button>
+
+        <div>
+          <span class="display number">{{ drug.number }}</span>
+          <input
+            form="edit-form-{{ drug.id }}"
+            class="edit number"
+            type="number"
+            name="number"
+            value="{{ drug.number }}"
+            hidden
+            required
+          >
         </div>
-    </form>
-    <div class="drug-actions">
+
+        <div>
+          <span class="display price">${{ drug.price }}</span>
+          <input
+            form="edit-form-{{ drug.id }}"
+            class="edit price"
+            type="number"
+            step="0.01"
+            name="price"
+            value="{{ drug.price }}"
+            hidden
+          >
+        </div>
+
+        <div>
+          <span class="display expiration {% if drug.expiration_date and drug.expiration_date < today %}expired{% endif %}">
+            {{ drug.expiration_date }}
+          </span>
+          <input
+            form="edit-form-{{ drug.id }}"
+            class="edit expiration"
+            type="date"
+            name="expiration_date"
+            value="{{ drug.expiration_date|date:'Y-m-d' }}"
+            hidden
+          >
+        </div>
+
+        <div class="desc-block">
+          <button
+            type="button"
+            class="display description"
+            onclick="showDescriptionPopup(event, '{{ drug.description|escapejs }}')"
+          >
+            Show Description
+          </button>
+          <textarea
+            form="edit-form-{{ drug.id }}"
+            class="edit description"
+            name="description"
+            hidden
+            rows="3"
+          >{{ drug.description }}</textarea>
+        </div>
+      </div>
+
+      {# ——— All Action Buttons in one row ——— #}
+      <div class="drug-actions">
+        {# 1) “Take” button (only in view mode) #}
         <form method="post" action="{% url 'take_drug' kit.id drug.id %}">
-            {% csrf_token %}
-            <button type="submit">Take</button>
+          {% csrf_token %}
+          <button type="submit" class="take-btn"
+                  {% if drug.expiration_date and drug.expiration_date < today %}disabled title="Expired"{% endif %}>
+              Take
+          </button>
         </form>
-        <button type="button" class="edit-toggle-btn" onclick="toggleEdit('{{ drug.id }}')">Edit</button>
+
+        {# 2) “Edit” toggle (view mode) #}
+        <button
+          type="button"
+          class="edit-toggle-btn"
+          onclick="toggleEdit('{{ drug.id }}')"
+        >
+          Edit
+        </button>
+
+        {# 3) “Confirm” (edit mode) → submits hidden edit‐form #}
+        <button
+          type="submit"
+          form="edit-form-{{ drug.id }}"
+          class="confirm-btn"
+          hidden
+        >
+          Confirm
+        </button>
+
+        {# 4) “Delete” (edit mode) → JS confirmPopup, then submit delete‐form #}
+        <button
+          type="button"
+          class="delete-btn"
+          hidden
+          onclick="confirmDelete('{{ drug.id }}')"
+        >
+          Delete
+        </button>
+      </div>
+
+      {# ——— Hidden “Edit” Form (only contains CSRF; inputs are scattered above) ——— #}
+      <form
+        method="post"
+        action="{% url 'edit_drug' kit.id drug.id %}"
+        id="edit-form-{{ drug.id }}"
+      >
+        {% csrf_token %}
+      </form>
+
+      {# ——— Hidden “Delete” Form (only CSRF) ——— #}
+      <form
+        method="post"
+        action="{% url 'delete_drug' kit.id drug.id %}"
+        id="delete-form-{{ drug.id }}"
+      >
+        {% csrf_token %}
+      </form>
     </div>
-</div>
-{% endfor %}
+  {% empty %}
+    <p>No drugs found.</p>
+  {% endfor %}
 
-<div id="description-popup"></div>
+  <!-- Popup container -->
+  <div id="description-popup"></div>
 
-<a href="?add_drug=1"><button {% if show_form %}disabled{% endif %}>Add Drug</button></a>
+  {# ───── Pagination Controls ───── #}
+  <div class="pagination">
+    {% if page_obj.has_previous %}
+      <a href="?sort_by={{ sort_by }}&amp;page={{ page_obj.previous_page_number }}">← Previous</a>
+    {% else %}
+      <span class="disabled">← Previous</span>
+    {% endif %}
 
-{% if show_form %}
-<div class="form-container">
-    <form method="post">
+    <span>Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
+
+    {% if page_obj.has_next %}
+      <a href="?sort_by={{ sort_by }}&amp;page={{ page_obj.next_page_number }}">Next →</a>
+    {% else %}
+      <span class="disabled">Next →</span>
+    {% endif %}
+  </div>
+
+  <hr>
+  <a href="?sort_by={{ sort_by }}&amp;add_drug=1">
+    <button {% if show_form %}disabled{% endif %}>Add Drug</button>
+  </a>
+
+  {% if show_form %}
+    <div class="form-container">
+      <form method="post">
         {% csrf_token %}
         {{ form.as_p }}
         <button type="submit">Confirm</button>
-        <a href="{% url 'manage_kit' kit.id %}"><button type="button">Cancel</button></a>
-    </form>
-</div>
-{% endif %}
+        <a href="{% url 'manage_kit' kit.id %}?sort_by={{ sort_by }}&amp;page={{ page_obj.number }}">
+          <button type="button">Cancel</button>
+        </a>
+      </form>
+    </div>
+  {% endif %}
 {% endblock %}
 
 {% block extra_js %}
