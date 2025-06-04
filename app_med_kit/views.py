@@ -7,6 +7,9 @@ from .models import Kit, Drug
 from .forms import DrugForm, KitForm
 
 
+from django.core.paginator import Paginator
+from .models import DrugTake
+
 @login_required
 def dashboard(request):
     kits = Kit.objects.filter(user=request.user)
@@ -21,10 +24,24 @@ def dashboard(request):
             kit.save()
             return redirect('dashboard')
 
+    # Sorting and paginating DrugTake records
+    take_sort = request.GET.get('take_sort', 'taken_at')
+    take_page = request.GET.get('take_page', 1)
+
+    if take_sort == 'drug':
+        takes = DrugTake.objects.filter(user=request.user).select_related('drug').order_by('drug__name')
+    else:
+        takes = DrugTake.objects.filter(user=request.user).select_related('drug').order_by('-taken_at')
+
+    paginator = Paginator(takes, 5)
+    take_page_obj = paginator.get_page(take_page)
+
     return render(request, 'app_med_kit/dashboard.html', {
         'kits': kits,
         'form': form,
         'show_form': show_form,
+        'take_page_obj': take_page_obj,
+        'take_sort': take_sort,
     })
 
 from datetime import date
@@ -85,17 +102,22 @@ def edit_drug(request, kit_id, drug_id):
     return redirect(f"{reverse('manage_kit', args=[kit.id])}?sort_by=name")
 
 
+from .models import DrugTake
+
 @require_POST
 @login_required
 def take_drug(request, kit_id, drug_id):
     kit = get_object_or_404(Kit, id=kit_id, user=request.user)
     drug = get_object_or_404(Drug, id=drug_id, kit=kit)
+
     if drug.number > 0:
         drug.number -= 1
         drug.save()
+        DrugTake.objects.create(user=request.user, drug=drug)
+
     sort_by = request.GET.get('sort_by', 'name')
     page = request.GET.get('page', '1')
-    return redirect(f"{reverse('manage_kit', args=[kit.id])}?sort_by=name")
+    return redirect(f"{reverse('manage_kit', args=[kit.id])}?sort_by={sort_by}&page={page}")
 
 
 @require_POST
