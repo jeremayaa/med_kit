@@ -107,3 +107,12 @@ def delete_drug(request, kit_id, drug_id):
     sort_by = request.GET.get('sort_by', 'name')
     page = request.GET.get('page', '1')
     return redirect(f"{reverse('manage_kit', args=[kit.id])}?sort_by=name")
+
+from django.views.decorators.http import require_POST
+
+@require_POST
+@login_required
+def delete_kit(request, kit_id):
+    kit = get_object_or_404(Kit, id=kit_id, user=request.user)
+    kit.delete()
+    return redirect('dashboard')

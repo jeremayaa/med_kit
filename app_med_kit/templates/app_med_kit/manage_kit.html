@@ -10,7 +10,13 @@
 {% block content %}
   <h1>Manage Kit: {{ kit.name }}</h1>
   <p>{{ kit.description }}</p>
-  <a href="{% url 'dashboard' %}">← Back to Dashboard</a>
+  <div class="navbar-top">
+    <a href="{% url 'dashboard' %}">← Back to Dashboard</a>
+    <form method="post" action="{% url 'delete_kit' kit.id %}" id="delete-kit-form" style="display: inline;">
+      {% csrf_token %}
+      <button type="button" onclick="confirmDeleteKit()">Delete Kit</button>
+    </form>
+  </div>
 
   <hr>
   <h2>Drugs</h2>

@@ -110,3 +110,28 @@ button[disabled] {
     cursor: not-allowed;
     opacity: 0.6;
 }
+
+.navbar-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+}
+
+.navbar-top a,
+.navbar-top button {
+    background-color: #f1f5f9;
+    color: #0c4a6e;
+    padding: 6px 12px;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    text-decoration: none;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+}
+
+.navbar-top button:hover,
+.navbar-top a:hover {
+    background-color: #e2e8f0;
+}

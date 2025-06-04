@@ -15,24 +15,26 @@
 
 <hr>
 <h2>Your Kits</h2>
-<ul>
-    {% for kit in kits %}
-        <li class="kit-card">
-            <a href="{% url 'manage_kit' kit.id %}"><strong>{{ kit.name }}</strong></a>
-            {% if kit.description %}<br>{{ kit.description }}{% endif %}
-            <ul>
-                {% for drug in kit.drugs.all|slice:":3" %}
-                    <li>{{ drug.name }} ({{ drug.number }})</li>
-                {% endfor %}
-                {% if kit.drugs.count > 3 %}
-                    <li>...and more</li>
-                {% endif %}
-            </ul>
-        </li>
-    {% empty %}
-        <li>You have no kits yet.</li>
-    {% endfor %}
-</ul>
+<div class="kit-grid">
+  {% for kit in kits %}
+    <a href="{% url 'manage_kit' kit.id %}" class="kit-card">
+      <h3>{{ kit.name }}</h3>
+      {% if kit.description %}
+        <p>{{ kit.description }}</p>
+      {% endif %}
+      <ul>
+        {% for drug in kit.drugs.all|slice:":3" %}
+          <li>{{ drug.name }} ({{ drug.number }})</li>
+        {% endfor %}
+        {% if kit.drugs.count > 3 %}
+          <li>...and more</li>
+        {% endif %}
+      </ul>
+    </a>
+  {% empty %}
+    <p>You have no kits yet.</p>
+  {% endfor %}
+</div>
 
 <hr>
 <a href="?add_kit=1"><button {% if show_form %}disabled{% endif %}>Add Kit</button></a>

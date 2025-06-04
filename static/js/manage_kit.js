@@ -41,3 +41,10 @@ function toggleEdit(id) {
     if (form) form.submit();
   }
   
+
+function confirmDeleteKit() {
+const confirmed = window.confirm("Are you sure you want to delete this entire kit?");
+if (confirmed) {
+    document.getElementById('delete-kit-form').submit();
+}
+}
