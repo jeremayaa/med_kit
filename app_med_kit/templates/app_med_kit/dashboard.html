@@ -61,7 +61,20 @@
     <a href="?take_sort=drug">Drug</a> |
     <strong>Date</strong>
   {% endif %}
+
+  <form method="post" action="{% url 'delete_usage_history' %}" id="delete-history-form" style="display: inline; margin-left: 20px;">
+    {% csrf_token %}
+    <button type="button" onclick="confirmDeleteHistory()">Delete History</button>
+  </form>
 </div>
+
+<script>
+  function confirmDeleteHistory() {
+    if (confirm("Are you sure you want to delete your entire drug usage history?")) {
+      document.getElementById('delete-history-form').submit();
+    }
+  }
+</script>
 
 <table class="usage-table">
   <thead>

@@ -138,3 +138,10 @@ def delete_kit(request, kit_id):
     kit = get_object_or_404(Kit, id=kit_id, user=request.user)
     kit.delete()
     return redirect('dashboard')
+
+
+@require_POST
+@login_required
+def delete_usage_history(request):
+    DrugTake.objects.filter(user=request.user).delete()
+    return redirect('dashboard')
