@@ -15,6 +15,18 @@
 
 <hr>
 <h2>Your Kits</h2>
+<a href="?add_kit=1"><button {% if show_form %}disabled{% endif %}>Add Kit</button></a>
+{% if show_form %}
+<div class="form-container">
+    <form method="post">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button type="submit">Confirm</button>
+        <a href="{% url 'dashboard' %}"><button type="button">Cancel</button></a>
+    </form>
+</div>
+{% endif %}
+
 <div class="kit-grid">
   {% for kit in kits %}
     <a href="{% url 'manage_kit' kit.id %}" class="kit-card">
@@ -36,18 +48,6 @@
   {% endfor %}
 </div>
 
-<hr>
-<a href="?add_kit=1"><button {% if show_form %}disabled{% endif %}>Add Kit</button></a>
-{% if show_form %}
-<div class="form-container">
-    <form method="post">
-        {% csrf_token %}
-        {{ form.as_p }}
-        <button type="submit">Confirm</button>
-        <a href="{% url 'dashboard' %}"><button type="button">Cancel</button></a>
-    </form>
-</div>
-{% endif %}
 
 <hr>
 <h2>Recent Drug Usage</h2>

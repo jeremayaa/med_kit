@@ -10,5 +10,4 @@ urlpatterns = [
     path('kit/<int:kit_id>/delete/', views.delete_kit, name='delete_kit'),
     path('delete_usage_history/', views.delete_usage_history, name='delete_usage_history'),
 
-
 ]

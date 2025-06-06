@@ -1,6 +1,10 @@
-<h1>Register</h1>
-<form method="post">
+{% extends 'app_home/home_base.html' %}
+{% block title %}Register{% endblock %}
+{% block content %}
+  <h1 class="headline">Register</h1>
+  <form method="post" class="form-box">
     {% csrf_token %}
     {{ form.as_p }}
-    <button type="submit">Register</button>
-</form>
+    <button type="submit" class="button">Register</button>
+  </form>
+{% endblock %}
