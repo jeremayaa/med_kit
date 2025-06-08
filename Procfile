@@ -1,1 +1,1 @@
-web: gunicorn medkit.wsgi --log-file -
+web: gunicorn med_kit.wsgi --log-file -
