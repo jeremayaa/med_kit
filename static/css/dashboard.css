@@ -1,3 +1,8 @@
+body {
+  margin: 20px;
+  padding: 20px;
+}
+
 .kit-grid {
   display: flex;
   flex-wrap: wrap;

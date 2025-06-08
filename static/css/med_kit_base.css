@@ -1,12 +1,12 @@
 body {
     font-family: Arial, sans-serif;
-    background-color: #f6f8fa;
-    color: #222;
+    background-color: #eeedf5;
+    color: #000000;
     padding: 20px;
 }
 
 h1, h2 {
-    color: #0c4a6e;
+    color: #000000;
 }
 
 button {
