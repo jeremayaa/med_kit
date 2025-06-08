@@ -201,7 +201,7 @@
     <div class="form-container">
       <form method="post">
         {% csrf_token %}
-        {{ form.as_p }}
+        {{ form.as_p }} RRRR-MM-DD
         <button type="submit">Confirm</button>
         <a href="{% url 'manage_kit' kit.id %}?sort_by={{ sort_by }}&amp;page={{ page_obj.number }}">
           <button type="button">Cancel</button>
